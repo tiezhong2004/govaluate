@@ -42,9 +42,8 @@ type EvaluableExpression struct {
 	Returns an error if the given expression has invalid syntax.
 */
 func NewEvaluableExpression(expression string) (*EvaluableExpression, error) {
-
-	functions := make(map[string]ExpressionFunction)
-	return NewEvaluableExpressionWithFunctions(expression, functions)
+   //对自定义的函数map进行注册  by wutz20211204
+	return NewEvaluableExpressionWithFunctions(expression, Functions)
 }
 
 /*
@@ -88,57 +87,17 @@ func NewEvaluableExpressionFromTokens(tokens []ExpressionToken) (*EvaluableExpre
 	Functions passed into this will be available to the expression.
 */
 func NewEvaluableExpressionWithFunctions(expression string, functions map[string]ExpressionFunction) (*EvaluableExpression, error) {
-
-	var ret *EvaluableExpression
-	var err error
-
-	ret = new(EvaluableExpression)
-	ret.QueryDateFormat = isoDateFormat
-	ret.inputExpression = expression
-
-	ret.tokens, err = parseTokens(expression, functions)
-	if err != nil {
-		return nil, err
-	}
-
-	err = checkBalance(ret.tokens)
-	if err != nil {
-		return nil, err
-	}
-
-	err = checkExpressionSyntax(ret.tokens)
-	if err != nil {
-		return nil, err
-	}
-
-	ret.tokens, err = optimizeTokens(ret.tokens)
-	if err != nil {
-		return nil, err
-	}
-
-	ret.evaluationStages, err = planStages(ret.tokens)
-	if err != nil {
-		return nil, err
-	}
-
-	ret.ChecksTypes = true
-	return ret, nil
-}
-
-/*
-	对自定义的函数map与库默认自带的函数map.进行合并，Similar to [NewEvaluableExpression], except enables the use of user-defined functions.
-	Functions passed into this will be available to the expression
-*/
-func NewExprtk(expression string, functions map[string]ExpressionFunction) (*EvaluableExpression, error) {
+	//对自定义的函数map与库默认自带的函数map.进行合并  by wutz20211204
 	FunctionsMerge := make(map[string]ExpressionFunction)
 	FunctionsMerge = Functions
-    if functions != nil {
+	if functions != nil {
 		for k, v := range functions {
 			if _, ok := FunctionsMerge[k]; !ok {
 				FunctionsMerge[k] = v
 			}
 		}
 	}
+
 	var ret *EvaluableExpression
 	var err error
 
@@ -174,7 +133,6 @@ func NewExprtk(expression string, functions map[string]ExpressionFunction) (*Eva
 	ret.ChecksTypes = true
 	return ret, nil
 }
-
 
 /*
 	Same as `Eval`, but automatically wraps a map of parameters into a `govalute.Parameters` structure.
